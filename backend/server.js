@@ -8,8 +8,27 @@ const app = express();
 
 const port = process.env.PORT || 3000;
 
+
+/* ========================================
+   MIDDLEWARE
+======================================== */
+
 app.use(cors());
+
 app.use(express.json());
+
+
+/* ========================================
+   API HEALTH CHECK
+======================================== */
+
+app.get('/api', (req, res) => {
+
+    res.json({
+        message: 'NoteFlow API is running'
+    });
+
+});
 
 
 /* ========================================
@@ -69,7 +88,9 @@ app.post('/api/quotes', async (req, res) => {
 
     try {
 
-        const { quote_text } = req.body;
+        const { quote_text } =
+            req.body;
+
 
         if (!quote_text) {
 
@@ -79,15 +100,20 @@ app.post('/api/quotes', async (req, res) => {
 
         }
 
+
         const [result] =
             await db.query(
                 'INSERT INTO quotes (quote_text) VALUES (?)',
                 [quote_text]
             );
 
+
         return res.status(201).json({
+
             id: result.insertId,
+
             quote_text
+
         });
 
     } catch (err) {
@@ -107,7 +133,7 @@ app.post('/api/quotes', async (req, res) => {
 
 
 /* ========================================
-   SETTINGS
+   SETTINGS - GET USERNAME
 ======================================== */
 
 app.get(
@@ -121,11 +147,15 @@ app.get(
                     'SELECT username FROM settings WHERE id = 1'
                 );
 
+
             if (rows.length > 0) {
 
-                return res.json(rows[0]);
+                return res.json(
+                    rows[0]
+                );
 
             }
+
 
             return res.json({
                 username: 'User'
@@ -149,13 +179,19 @@ app.get(
 );
 
 
+/* ========================================
+   SETTINGS - UPDATE USERNAME
+======================================== */
+
 app.put(
     '/api/settings/username',
     async (req, res) => {
 
         try {
 
-            const { username } = req.body;
+            const { username } =
+                req.body;
+
 
             if (!username) {
 
@@ -166,13 +202,17 @@ app.put(
 
             }
 
+
             await db.query(
                 'UPDATE settings SET username = ? WHERE id = 1',
                 [username]
             );
 
+
             return res.json({
+
                 username
+
             });
 
         } catch (err) {
@@ -194,13 +234,58 @@ app.put(
 
 
 /* ========================================
+   404 HANDLER
+======================================== */
+
+app.use((req, res) => {
+
+    res.status(404).json({
+
+        error: 'Route not found',
+
+        path: req.originalUrl
+
+    });
+
+});
+
+
+/* ========================================
+   ERROR HANDLER
+======================================== */
+
+app.use(
+    (err, req, res, next) => {
+
+        console.error(
+            'Server error:',
+            err
+        );
+
+
+        res.status(500).json({
+
+            error:
+                'Internal server error'
+
+        });
+
+    }
+);
+
+
+/* ========================================
    START SERVER
 ======================================== */
 
-app.listen(port, '0.0.0.0', () => {
+app.listen(
+    port,
+    '0.0.0.0',
+    () => {
 
-    console.log(
-        `Server running on port ${port}`
-    );
+        console.log(
+            `Server running on port ${port}`
+        );
 
-});
+    }
+);
