@@ -5,84 +5,121 @@ import {
     onMounted
 } from 'vue';
 
+import {
+    getUsername
+} from '../services/noteService.js';
+
 
 export function useChat() {
+
+    /* ========================================
+       API
+    ======================================== */
+
+    const BASE_URL =
+        import.meta.env.VITE_API_URL ||
+        'http://localhost:5000/api';
+
 
     /* ========================================
        STATE
     ======================================== */
 
-    const userMessage = ref('');
+    const userMessage =
+        ref('');
 
-    const chatContainer = ref(null);
+    const chatContainer =
+        ref(null);
 
-    const username = ref('User');
+    const username =
+        ref('User');
 
-    const isLoading = ref(false);
+    const isLoading =
+        ref(false);
+
+
+    /* ========================================
+       GREETING
+    ======================================== */
+
+    const createGreeting = (
+        name
+    ) => {
+
+        return `Hi ${name}! I'm your NoteFlow assistant. I can help you organise your thoughts, improve your notes, find ideas, or brainstorm with you. What would you like to work on?`;
+
+    };
 
 
     /* ========================================
        CHAT HISTORY
     ======================================== */
 
-    const chatHistory = ref([
-        {
-            sender: 'ai',
+    const chatHistory =
+        ref([
 
-            text:
-                `Hi ${username.value}! I'm your NoteFlow assistant. I can help you organise your thoughts, improve your notes, find ideas, or brainstorm with you. What would you like to work on?`
-        }
-    ]);
+            {
+                sender: 'ai',
+
+                text:
+                    createGreeting(
+                        username.value
+                    )
+            }
+
+        ]);
 
 
     /* ========================================
        LOAD USERNAME
     ======================================== */
 
-    onMounted(async () => {
+    const loadUsername =
+        async () => {
 
-        try {
+            try {
 
-            const response =
-                await fetch(
-                    'http://localhost:5000/api/settings/username'
-                );
+                const data =
+                    await getUsername();
 
 
-            if (!response.ok) {
+                if (
+                    data &&
+                    data.username
+                ) {
 
-                throw new Error(
-                    'Failed to load username'
+                    username.value =
+                        data.username;
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    'Failed to load username for chatbot:',
+                    error
                 );
 
             }
 
-
-            const data =
-                await response.json();
-
-
-            if (data.username) {
-
-                username.value =
-                    data.username;
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                'Failed to load username:',
-                error
-            );
-
-        }
-
-    });
+        };
 
 
     /* ========================================
-       UPDATE GREETING
+       MOUNT
+    ======================================== */
+
+    onMounted(
+        async () => {
+
+            await loadUsername();
+
+        }
+    );
+
+
+    /* ========================================
+       WATCH USERNAME
     ======================================== */
 
     watch(
@@ -95,7 +132,9 @@ export function useChat() {
             ) {
 
                 chatHistory.value[0].text =
-                    `Hi ${newName}! I'm your NoteFlow assistant. I can help you organise your thoughts, improve your notes, find ideas, or brainstorm with you. What would you like to work on?`;
+                    createGreeting(
+                        newName
+                    );
 
             }
 
@@ -104,230 +143,236 @@ export function useChat() {
 
 
     /* ========================================
-       SCROLL CHAT
+       SCROLL
     ======================================== */
 
-    const scrollToBottom = async () => {
+    const scrollToBottom =
+        async () => {
 
-        await nextTick();
+            await nextTick();
 
 
-        if (chatContainer.value) {
+            if (
+                chatContainer.value
+            ) {
 
-            chatContainer.value.scrollTop =
-                chatContainer.value.scrollHeight;
+                chatContainer.value.scrollTop =
+                    chatContainer.value.scrollHeight;
 
-        }
+            }
 
-    };
+        };
 
 
     /* ========================================
        SEND MESSAGE
     ======================================== */
 
-    const sendMessage = async () => {
+    const sendMessage =
+        async () => {
 
-        const query =
-            userMessage.value.trim();
-
-
-        /* Don't send empty message */
-
-        if (!query) {
-            return;
-        }
+            const query =
+                userMessage.value.trim();
 
 
-        /* Don't send while AI is responding */
-
-        if (isLoading.value) {
-            return;
-        }
-
-
-        /* ----------------------------------------
-           ADD USER MESSAGE
-        ---------------------------------------- */
-
-        chatHistory.value.push({
-            sender: 'user',
-            text: query
-        });
-
-
-        /* Clear input */
-
-        userMessage.value = '';
-
-
-        await scrollToBottom();
-
-
-        /* ----------------------------------------
-           START LOADING
-        ---------------------------------------- */
-
-        isLoading.value = true;
-
-
-        try {
-
-            /* ----------------------------------------
-               SEND TO BACKEND
-            ---------------------------------------- */
-
-            const response =
-                await fetch(
-                    'http://localhost:5000/api/chat',
-                    {
-                        method: 'POST',
-
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
-
-                        body: JSON.stringify({
-                            message: query,
-                            username:
-                                username.value
-                        })
-                    }
-                );
-
-
-            /* ----------------------------------------
-               CHECK RESPONSE
-            ---------------------------------------- */
-
-            if (!response.ok) {
-
-                const errorData =
-                    await response
-                        .json()
-                        .catch(() => ({}));
-
-
-                throw new Error(
-                    errorData.message ||
-                    `Server returned ${response.status}`
-                );
-
+            if (!query) {
+                return;
             }
 
 
-            /* ----------------------------------------
-               READ RESPONSE
-            ---------------------------------------- */
-
-            const data =
-                await response.json();
-
-
-            const reply =
-                data?.reply?.trim();
-
-
-            /* ----------------------------------------
-               ADD AI RESPONSE
-            ---------------------------------------- */
-
-            if (reply) {
-
-                chatHistory.value.push({
-                    sender: 'ai',
-                    text: reply
-                });
-
-            } else {
-
-                chatHistory.value.push({
-                    sender: 'ai',
-
-                    text:
-                        `I'm here to help, ${username.value}. Try asking me about your notes, ideas, writing, or something you'd like to organise.`
-                });
-
+            if (isLoading.value) {
+                return;
             }
 
 
-        } catch (error) {
-
-            console.error(
-                'Chat request failed:',
-                error
-            );
-
-
-            /* ----------------------------------------
-               ERROR MESSAGE
-            ---------------------------------------- */
+            /* USER MESSAGE */
 
             chatHistory.value.push({
-                sender: 'ai',
 
-                text:
-                    `Sorry, ${username.value}. I couldn't connect to the NoteFlow assistant. Please make sure the backend server is running and try again.`
+                sender: 'user',
+
+                text: query
+
             });
 
 
-        } finally {
+            userMessage.value = '';
 
-            isLoading.value = false;
 
             await scrollToBottom();
 
-        }
 
-    };
+            isLoading.value = true;
+
+
+            try {
+
+                /* ==============================
+                   CHAT REQUEST
+                ============================== */
+
+                const response =
+                    await fetch(
+                        `${BASE_URL}/chat`,
+                        {
+                            method: 'POST',
+
+                            headers: {
+                                'Content-Type':
+                                    'application/json'
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    message: query,
+                                    username:
+                                        username.value
+                                })
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    const errorData =
+                        await response
+                            .json()
+                            .catch(
+                                () => ({})
+                            );
+
+
+                    throw new Error(
+                        errorData.message ||
+                        errorData.error ||
+                        `Server returned ${response.status}`
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                const reply =
+                    data?.reply?.trim();
+
+
+                if (reply) {
+
+                    chatHistory.value.push({
+
+                        sender: 'ai',
+
+                        text: reply
+
+                    });
+
+                } else {
+
+                    chatHistory.value.push({
+
+                        sender: 'ai',
+
+                        text:
+                            `I'm here to help, ${username.value}. Try asking me about your notes, ideas, writing, or something you'd like to organise.`
+
+                    });
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    'Chat request failed:',
+                    error
+                );
+
+
+                chatHistory.value.push({
+
+                    sender: 'ai',
+
+                    text:
+                        `Sorry, ${username.value}. I couldn't connect to the NoteFlow assistant right now. Please check that the backend is running and try again.`
+
+                });
+
+            } finally {
+
+                isLoading.value =
+                    false;
+
+                await scrollToBottom();
+
+            }
+
+        };
 
 
     /* ========================================
        QUICK SUGGESTION
     ======================================== */
 
-    const sendSuggestion = async (
-        suggestion
-    ) => {
+    const sendSuggestion =
+        async (
+            suggestion
+        ) => {
 
-        if (
-            !suggestion ||
-            isLoading.value
-        ) {
+            if (
+                !suggestion ||
+                isLoading.value
+            ) {
 
-            return;
+                return;
 
-        }
-
-
-        userMessage.value =
-            suggestion;
+            }
 
 
-        await sendMessage();
+            userMessage.value =
+                suggestion;
 
-    };
+
+            await sendMessage();
+
+        };
 
 
     /* ========================================
        CLEAR CHAT
     ======================================== */
 
-    const clearChat = () => {
+    const clearChat =
+        () => {
 
-        chatHistory.value = [
+            chatHistory.value = [
 
-            {
-                sender: 'ai',
+                {
+                    sender: 'ai',
 
-                text:
-                    `Hi ${username.value}! I'm your NoteFlow assistant. What would you like to work on?`
-            }
+                    text:
+                        createGreeting(
+                            username.value
+                        )
 
-        ];
+                }
 
-    };
+            ];
+
+        };
+
+
+    /* ========================================
+       REFRESH USERNAME
+    ======================================== */
+
+    const refreshChatUsername =
+        async () => {
+
+            await loadUsername();
+
+        };
 
 
     /* ========================================
@@ -350,7 +395,9 @@ export function useChat() {
 
         sendSuggestion,
 
-        clearChat
+        clearChat,
+
+        refreshChatUsername
 
     };
 
