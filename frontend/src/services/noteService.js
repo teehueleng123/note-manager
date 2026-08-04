@@ -1,7 +1,15 @@
+/* ========================================
+   API CONFIGURATION
+======================================== */
+
 const BASE_URL =
     import.meta.env.VITE_API_URL ||
     'http://localhost:5000/api';
 
+
+/* ========================================
+   API FETCH HELPER
+======================================== */
 
 const apiFetch = async (
     url,
@@ -14,6 +22,10 @@ const apiFetch = async (
             options
         );
 
+
+    /* ----------------------------------------
+       CHECK RESPONSE
+    ---------------------------------------- */
 
     if (!response.ok) {
 
@@ -28,11 +40,16 @@ const apiFetch = async (
 
         throw new Error(
             errorInfo.message ||
+            errorInfo.error ||
             `Request failed: ${response.status}`
         );
 
     }
 
+
+    /* ----------------------------------------
+       CHECK CONTENT TYPE
+    ---------------------------------------- */
 
     const contentType =
         response.headers.get(
@@ -61,6 +78,9 @@ const apiFetch = async (
    NOTES
 ======================================== */
 
+/**
+ * Get all notes
+ */
 export const getNotes = async () => {
 
     return apiFetch(
@@ -70,6 +90,9 @@ export const getNotes = async () => {
 };
 
 
+/**
+ * Create a new note
+ */
 export const createNote = async (
     noteData
 ) => {
@@ -77,6 +100,7 @@ export const createNote = async (
     return apiFetch(
         `${BASE_URL}/notes`,
         {
+
             method: 'POST',
 
             headers: {
@@ -88,12 +112,16 @@ export const createNote = async (
                 JSON.stringify(
                     noteData
                 )
+
         }
     );
 
 };
 
 
+/**
+ * Update an existing note
+ */
 export const updateNote = async (
     id,
     noteData
@@ -102,6 +130,7 @@ export const updateNote = async (
     return apiFetch(
         `${BASE_URL}/notes/${id}`,
         {
+
             method: 'PUT',
 
             headers: {
@@ -113,12 +142,16 @@ export const updateNote = async (
                 JSON.stringify(
                     noteData
                 )
+
         }
     );
 
 };
 
 
+/**
+ * Delete a note
+ */
 export const deleteNote = async (
     id
 ) => {
@@ -126,7 +159,9 @@ export const deleteNote = async (
     return apiFetch(
         `${BASE_URL}/notes/${id}`,
         {
+
             method: 'DELETE'
+
         }
     );
 
@@ -137,6 +172,9 @@ export const deleteNote = async (
    QUOTES
 ======================================== */
 
+/**
+ * Get all quotes
+ */
 export const getQuotes = async () => {
 
     return apiFetch(
@@ -150,6 +188,9 @@ export const getQuotes = async () => {
    USERNAME
 ======================================== */
 
+/**
+ * Get current username
+ */
 export const getUsername = async () => {
 
     return apiFetch(
@@ -159,6 +200,9 @@ export const getUsername = async () => {
 };
 
 
+/**
+ * Update username
+ */
 export const updateUsername = async (
     username
 ) => {
@@ -166,6 +210,7 @@ export const updateUsername = async (
     return apiFetch(
         `${BASE_URL}/settings/username`,
         {
+
             method: 'PUT',
 
             headers: {
@@ -177,6 +222,7 @@ export const updateUsername = async (
                 JSON.stringify({
                     username
                 })
+
         }
     );
 
