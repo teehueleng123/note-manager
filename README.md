@@ -98,42 +98,6 @@ The interface uses a modern glassmorphism-inspired design with gradients, cards,
 
 ---
 
-## 📁 Project Structure
-
-```text
-note-manager/
-│
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── composables/
-│   │   ├── services/
-│   │   │   └── noteService.js
-│   │   ├── styles/
-│   │   │   ├── app.css
-│   │   │   └── global.css
-│   │   ├── App.vue
-│   │   └── main.js
-│   │
-│   ├── public/
-│   ├── package.json
-│   └── vite.config.js
-│
-├── backend/
-│   ├── routes/
-│   ├── controllers/
-│   ├── database/
-│   ├── server.js
-│   ├── package.json
-│   └── ...
-│
-└── README.md
-```
-
-> The exact folder names may vary depending on the final project structure.
-
----
-
 # 🚀 Getting Started
 
 ## 1. Clone the Repository
