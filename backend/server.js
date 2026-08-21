@@ -281,11 +281,18 @@ app.use(
 app.listen(
     port,
     '0.0.0.0',
-    () => {
+    async () => {
 
         console.log(
             `Server running on port ${port}`
         );
+
+        try {
+            await db.query('SELECT 1');
+            console.log('Database connected successfully.');
+        } catch (dbErr) {
+            console.error('Database connection error on startup:', dbErr.message);
+        }
 
     }
 );
